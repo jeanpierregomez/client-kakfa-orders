@@ -1,0 +1,91 @@
+# Use root/example as user/password credentials
+version: '3.1'
+
+services:
+
+  zookeeper-order:
+    image: confluentinc/cp-zookeeper:7.0.1
+    container_name: zookeeper-order
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka-order:
+    image: confluentinc/cp-kafka:7.0.1
+    container_name: kafka-order
+    ports:    
+      - "9092:9092"
+    depends_on:
+      - zookeeper-order
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper-order:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-order:29092,PLAINTEXT_HOST://kafka-order:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  kafka-ui-order:
+    container_name: kafka-ui-order
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8089:8080
+    depends_on:
+      - kafka-order
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-order:29092
+
+  mongo-order:
+    image: mongo
+    restart: always
+    ports:
+      - 27018:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: strongpassword
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: strongpassword
+      ME_CONFIG_MONGODB_URL: mongodb://root:strongpassword@mongo-order:27017/admin
+      ME_CONFIG_BASICAUTH: false
+  
+  order-consumer:
+    image: order-consumer
+    volumes:
+      - C:\Users\youruser\.aws:/home/cnb/.aws:ro
+    ports:
+      - 8085:8080
+    depends_on:
+      - kafka-order
+      - mongo-order
+    environment:
+      MONGODB_USERNAME: root
+      MONGODB_PASSWORD: strongpassword
+      MONGODB_HOST: mongo-order
+      KAFKA_BOOSTRAP_SERVERS: kafka-order:9092
+
+  init-kafka:
+    image: confluentinc/cp-kafka:6.1.1
+    depends_on:
+      - kafka-order
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+        "
+        # blocks until kafka is reachable
+        kafka-topics --bootstrap-server kafka-order:29092 --list
+
+        echo -e 'Creating kafka topics'
+        kafka-topics --bootstrap-server kafka-order:29092 --create --if-not-exists --topic orders --replication-factor 1 --partitions 1
+
+        echo -e 'Successfully created the following topics:'
+        kafka-topics --bootstrap-server kafka-order:29092 --list
+        "

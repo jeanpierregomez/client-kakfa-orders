@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  MyDynamoDBTable1:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Products
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S  
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH  
+      BillingMode: PAY_PER_REQUEST  
+      
+  MyDynamoDBTable2:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Customers
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S  
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH  
+      BillingMode: PAY_PER_REQUEST 

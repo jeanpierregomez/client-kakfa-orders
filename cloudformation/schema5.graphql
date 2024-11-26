@@ -1,0 +1,47 @@
+type Query {
+  getCustomer(id: ID!): Customer
+  getProducts(ids: [ID]): [Product]
+  listCustomers: [Customer]
+  listProducts: [Product]
+}
+
+type Mutation {
+  createProduct(
+    id: ID!,
+    name: String!,
+    description: String!,
+    category: String!,
+    price: Float!
+  ): Product
+
+  createCustomer(
+    id: ID!,
+    name: String!,
+    email: String!,
+    address: String!
+    active: Boolean!
+  ): Customer
+}
+
+type Product {
+    id: ID!
+    name: String!
+    description: String!
+    category: String!
+    price: Float!
+    createdAt: String!
+}
+
+type Customer {
+    id: ID!
+    name: String!
+    email: String!
+    address: String!
+    active: Boolean!
+    createdAt: String!
+}
+
+schema {
+    query: Query
+    mutation: Mutation
+}
