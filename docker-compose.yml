@@ -61,7 +61,7 @@ services:
   order-consumer:
     image: order-consumer
     volumes:
-      - C:\Users\youruser\.aws:/home/cnb/.aws:ro
+      - C:\Users\jeanp\.aws:/home/cnb/.aws:ro
     ports:
       - 8085:8080
     depends_on:
